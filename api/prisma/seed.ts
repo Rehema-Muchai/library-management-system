@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Start seeding...');
 
-  // Create 4 Genres
+  // 1. Create 4 Genres
   const genres = await prisma.genre.createMany({
     data: [
       { name: 'Science Fiction', slug: 'science-fiction' },
@@ -16,13 +17,13 @@ async function main() {
   });
   console.log(`Created ${genres.count} genres.`);
 
-  // Fetch genres to get their IDs
+  // 2. Fetch genres to get their IDs
   const sciFi = await prisma.genre.findUniqueOrThrow({ where: { slug: 'science-fiction' } });
   const fantasy = await prisma.genre.findUniqueOrThrow({ where: { slug: 'fantasy' } });
   const history = await prisma.genre.findUniqueOrThrow({ where: { slug: 'history' } });
   const nonFiction = await prisma.genre.findUniqueOrThrow({ where: { slug: 'non-fiction' } });
 
-  // Create 16 Books
+  // 3. Create 16 Books
   const books = await prisma.book.createMany({
     data: [
       { title: 'Dune', author: 'Frank Herbert', isbn: '978-0441172719', totalCopies: 5, availableCopies: 5, genreId: sciFi.id },
@@ -44,6 +45,34 @@ async function main() {
     ],
   });
   console.log(`Created ${books.count} books.`);
+
+  // 4. Create a LIBRARIAN user (hashed password)
+  const hashedLibrarian = await bcrypt.hash('secret123', 10);
+  await prisma.user.upsert({
+    where: { email: 'librarian@example.com' },
+    update: {},
+    create: {
+      name: 'Lead Librarian',
+      email: 'librarian@example.com',
+      password: hashedLibrarian,
+      role: 'LIBRARIAN',
+    },
+  });
+  console.log('Seeded librarian user.');
+
+  // 5. Create a PATRON user (hashed password)
+  const hashedPatron = await bcrypt.hash('secret123', 10);
+  await prisma.user.upsert({
+    where: { email: 'patron@example.com' },
+    update: {},
+    create: {
+      name: 'Regular Patron',
+      email: 'patron@example.com',
+      password: hashedPatron,
+      role: 'PATRON',
+    },
+  });
+  console.log('Seeded patron user.');
 
   console.log('Seeding finished.');
 }
