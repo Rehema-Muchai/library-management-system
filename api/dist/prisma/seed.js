@@ -38,6 +38,11 @@ const bcrypt = __importStar(require("bcryptjs"));
 const prisma = new client_1.PrismaClient();
 async function main() {
     console.log('Start seeding...');
+    await prisma.review.deleteMany();
+    await prisma.book.deleteMany();
+    await prisma.genre.deleteMany();
+    await prisma.user.deleteMany();
+    console.log('Cleared existing data.');
     const genres = await prisma.genre.createMany({
         data: [
             { name: 'Science Fiction', slug: 'science-fiction' },
@@ -73,10 +78,8 @@ async function main() {
     });
     console.log(`Created ${books.count} books.`);
     const hashedLibrarian = await bcrypt.hash('secret123', 10);
-    await prisma.user.upsert({
-        where: { email: 'librarian@example.com' },
-        update: {},
-        create: {
+    await prisma.user.create({
+        data: {
             name: 'Lead Librarian',
             email: 'librarian@example.com',
             password: hashedLibrarian,
@@ -85,10 +88,8 @@ async function main() {
     });
     console.log('Seeded librarian user.');
     const hashedPatron = await bcrypt.hash('secret123', 10);
-    await prisma.user.upsert({
-        where: { email: 'patron@example.com' },
-        update: {},
-        create: {
+    await prisma.user.create({
+        data: {
             name: 'Regular Patron',
             email: 'patron@example.com',
             password: hashedPatron,

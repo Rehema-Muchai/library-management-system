@@ -6,6 +6,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding...');
 
+  // 0. Clear existing data (order matters because of foreign keys)
+  await prisma.review.deleteMany();
+  await prisma.book.deleteMany();
+  await prisma.genre.deleteMany();
+  await prisma.user.deleteMany();
+  console.log('Cleared existing data.');
+
   // 1. Create 4 Genres
   const genres = await prisma.genre.createMany({
     data: [
@@ -48,10 +55,8 @@ async function main() {
 
   // 4. Create a LIBRARIAN user (hashed password)
   const hashedLibrarian = await bcrypt.hash('secret123', 10);
-  await prisma.user.upsert({
-    where: { email: 'librarian@example.com' },
-    update: {},
-    create: {
+  await prisma.user.create({
+    data: {
       name: 'Lead Librarian',
       email: 'librarian@example.com',
       password: hashedLibrarian,
@@ -62,10 +67,8 @@ async function main() {
 
   // 5. Create a PATRON user (hashed password)
   const hashedPatron = await bcrypt.hash('secret123', 10);
-  await prisma.user.upsert({
-    where: { email: 'patron@example.com' },
-    update: {},
-    create: {
+  await prisma.user.create({
+    data: {
       name: 'Regular Patron',
       email: 'patron@example.com',
       password: hashedPatron,
